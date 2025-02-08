@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Firebase ve Google Maps API Anahtarları
+google-services.json
+res/values/google_maps_api.xml
+
+

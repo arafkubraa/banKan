@@ -2,13 +2,12 @@ package com.atlantis.bankan
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -38,8 +37,10 @@ class SignInActivity : AppCompatActivity() {
             }
 
             if (usernameOrEmail.contains("@")) {
+                // Kullanıcı e-posta ile giriş yapıyor
                 signInWithEmail(usernameOrEmail, password)
             } else {
+                // Kullanıcı kullanıcı adı ile giriş yapıyor
                 signInWithUsername(usernameOrEmail, password)
             }
         }
@@ -55,9 +56,12 @@ class SignInActivity : AppCompatActivity() {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
+                    Log.d("FirebaseAuth", "Giriş başarılı: ${auth.currentUser?.email}")
                     navigateToMainActivity()
                 } else {
-                    Toast.makeText(this, "Giriş hatası: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                    val errorMessage = task.exception?.message ?: "Bilinmeyen hata"
+                    Log.e("FirebaseAuth", "Giriş hatası: $errorMessage")
+                    Toast.makeText(this, "Giriş hatası: $errorMessage", Toast.LENGTH_SHORT).show()
                 }
             }
     }
@@ -69,15 +73,20 @@ class SignInActivity : AppCompatActivity() {
             .addOnSuccessListener { documents ->
                 if (!documents.isEmpty) {
                     val email = documents.documents[0].getString("email")
+                    Log.d("Firestore", "Bulunan email: $email")
+
                     if (email != null) {
                         signInWithEmail(email, password)
+                    } else {
+                        showToast("Bu kullanıcı adı ile bağlantılı bir e-posta bulunamadı.")
                     }
                 } else {
-                    Toast.makeText(this, "Kullanıcı bulunamadı.", Toast.LENGTH_SHORT).show()
+                    showToast("Kullanıcı bulunamadı.")
                 }
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Bir hata oluştu: ${it.message}", Toast.LENGTH_SHORT).show()
+                Log.e("Firestore", "Firestore hatası: ${it.message}")
+                showToast("Bir hata oluştu: ${it.message}")
             }
     }
 
@@ -85,5 +94,9 @@ class SignInActivity : AppCompatActivity() {
         val intent = Intent(this@SignInActivity, MainActivity::class.java)
         startActivity(intent)
         finish()
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 }
